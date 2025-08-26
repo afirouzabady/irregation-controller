@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>Irrigation SMS Controller • Timers & Schedules</title>
+  <style>
+    :root{--bg:#0b1020;--panel:#121a2b;--muted:#7f8ab3;--accent:#0ea5e9;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;--text:#e6efff}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(160deg,#0b1020,#0e1a33 40%,#0b1020);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;}
+    .container{max-width:1040px;margin:auto;padding:16px}
+    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin:8px 0 16px}
+    h1{font-size:1.25rem;margin:0}
+    .pill{padding:6px 10px;border:1px solid #1c2a45;border-radius:999px;background:#0f1730;font-size:.8rem;color:var(--muted)}
+    .grid{display:grid;gap:14px}
+    @media(min-width:990px){.grid{grid-template-columns:1.1fr 1fr}}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid #1c2a45;border-radius:18px;padding:16px;box-shadow:0 10px 30px rgba(2,6,23,.45)}
+    .card h2{margin:.2rem 0 0.6rem;font-size:1rem;color:#bcd0ff}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid #1c2a45;background:#0f1730;color:#e9f2ff;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+    .btn:hover{border-color:#2b3c64}
+    .btn.primary{background:linear-gradient(180deg,#0fa5e9,#0284c7);border:none}
+    .btn.ghost{background:transparent;border-color:#2b3c64}
+    .btn.ok{background:linear-gradient(180deg,#34d399,#10b981);border:none}
+    .btn.danger{background:linear-gradient(180deg,#fb7185,#ef4444);border:none}
+    .btn.warn{background:linear-gradient(180deg,#fbbf24,#f59e0b);border:none}
+    label{display:block;font-size:.82rem;color:#a5b4fc;margin-bottom:6px}
+    input,textarea,select{width:100%;background:#0a1227;border:1px solid #1c2a45;color:#e8f0ff;border-radius:12px;padding:10px}
+    small{color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0 2px}
+    .kpi div{background:#0a1227;border:1px dashed #1c2a45;border-radius:14px;padding:12px;text-align:center}
+    .kpi .v{font-size:1.1rem;font-weight:800;color:#e8f3ff}
+    .tag{font-size:.75rem;color:#9fb7ff;background:#0c1a37;border:1px solid #1c2a45;border-radius:999px;padding:3px 8px}
+    .footer{opacity:.8;font-size:.8rem;margin-top:16px}
+    .row > .btn {min-width:140px}
+    .install{position:fixed;right:12px;bottom:12px;z-index:50}
+    .cols2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:640px){.cols2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 17c0-3.866 3.134-7 7-7h2a7 7 0 017 7" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/><path d="M7 17a5 5 0 015-5v0a5 5 0 015 5" stroke="#a5b4fc" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="2" fill="#34d399"/></svg>
+        <h1>Irrigation SMS Controller</h1>
+        <span class="pill">PWA • Offline-ready</span>
+      </div>
+      <div class="row">
+        <button id="btnInstall" class="btn ghost" style="display:none">Install</button>
+        <button id="btnSettings" class="btn">Settings</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- ZONES -->
+      <section class="card">
+        <h2>Zones (Command: Ct(output)#minutes)</h2>
+        <div class="kpi">
+          <div><div class="v" id="simLabel">SIM: —</div><div class="tag">Controller number</div></div>
+          <div><div class="v" id="platform">Detecting…</div><div class="tag">Platform</div></div>
+          <div><div class="v" id="lastSent">—</div><div class="tag">Last command</div></div>
+        </div>
+
+        <div class="card">
+          <h2>Zone A — Out1 + Out3</h2>
+          <div class="cols2">
+            <div><label>Minutes</label><input id="zA_minutes" inputmode="numeric" placeholder="80" /></div>
+            <div style="display:flex;align-items:flex-end;gap:10px">
+              <a class="btn ok" id="zA_start">Start Zone A</a>
+              <button class="btn ghost" id="zA_preview">Preview</button>
+            </div>
+          </div>
+          <small>Sends: Ct1#M and Ct3#M</small>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <h2>Zone B — Out1 + Out4</h2>
+          <div class="cols2">
+            <div><label>Minutes</label><input id="zB_minutes" inputmode="numeric" placeholder="45" /></div>
+            <div style="display:flex;align-items:flex-end;gap:10px">
+              <a class="btn ok" id="zB_start">Start Zone B</a>
+              <button class="btn ghost" id="zB_preview">Preview</button>
+            </div>
+          </div>
+          <small>Sends: Ct1#M and Ct4#M</small>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <h2>Zone C — Out2</h2>
+          <div class="cols2">
+            <div><label>Minutes</label><input id="zC_minutes" inputmode="numeric" placeholder="30" /></div>
+            <div style="display:flex;align-items:flex-end;gap:10px">
+              <a class="btn ok" id="zC_start">Start Zone C</a>
+              <button class="btn ghost" id="zC_preview">Preview</button>
+            </div>
+          </div>
+          <small>Sends: Ct2#M</small>
+        </div>
+      </section>
+
+      <!-- SCHEDULING -->
+      <section class="card">
+        <h2>Device Clock & Schedules</h2>
+        <div class="card">
+          <h2>Set Time + Weekday (Timeset#hh-mm-d)</h2>
+          <div class="cols2">
+            <div><label>Hour</label><input id="ts_h" inputmode="numeric" placeholder="12"></div>
+            <div><label>Minute</label><input id="ts_m" inputmode="numeric" placeholder="20"></div>
+          </div>
+          <div><label>Weekday (1=Sat…7=Fri)</label>
+            <select id="ts_d"><option value="1">Sat</option><option value="2">Sun</option><option value="3">Mon</option><option value="4">Tue</option><option value="5">Wed</option><option value="6">Thu</option><option value="7">Fri</option></select>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <a class="btn primary" id="timeset_send">Send</a>
+            <button class="btn ghost" id="timeset_preview">Preview</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <h2>Set Date (Dateset#yyyy-mm-dd)</h2>
+          <div class="cols2">
+            <div><label>Year</label><input id="ds_y" inputmode="numeric" placeholder="1403"></div>
+            <div><label>Month</label><input id="ds_m" inputmode="numeric" placeholder="07"></div>
+          </div>
+          <div><label>Day</label><input id="ds_d" inputmode="numeric" placeholder="15"></div>
+          <div class="row" style="margin-top:8px">
+            <a class="btn primary" id="dateset_send">Send</a>
+            <button class="btn ghost" id="dateset_preview">Preview</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:10px">
+          <h2>Weekly Timer (TmsN#hh-mm-RX-O-ABCDEFG)</h2>
+          <div class="cols2">
+            <div><label>Slot (1–16)</label><input id="wm_slot" placeholder="1"></div>
+            <div><label>Time</label><input id="wm_time" placeholder="16:00"></div>
+          </div>
+          <div class="cols2" style="margin-top:8px">
+            <div><label>Output</label><input id="wm_out" placeholder="3"></div>
+            <div><label>Action</label><select id="wm_on"><option value="1">ON</option><option value="0">OFF</option></select></div>
+          </div>
+          <div><label>Week mask (Sat→Fri, 7 digits)</label><input id="wm_mask" placeholder="1111111"></div>
+          <div class="row" style="margin-top:8px">
+            <a class="btn primary" id="tms_send">Send</a>
+            <button class="btn ghost" id="tms_preview">Preview</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="card">
+      <h2>Manual SMS</h2>
+      <textarea id="manualText" rows="3" placeholder="Ct3#80"></textarea>
+      <div class="row" style="margin-top:8px">
+        <a class="btn primary" id="manualSend">Send manual SMS</a>
+        <button class="btn ghost" id="copy">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    document.getElementById('platform').textContent = isIOS ? 'iOS' : /Android/.test(navigator.userAgent) ? 'Android' : 'Other';
+    function smsHref(number, body){
+      const encoded = encodeURIComponent(body);
+      return isIOS ? `sms:${number}&body=${encoded}` : `sms:${number}?body=${encoded}`;
+    }
+    function now(){ return new Date().toLocaleString(); }
+    const state={simNumber:"+989121301433",prefix:"",suffix:"",joiner:"\n"};
+    function wrap(lines){return lines.filter(Boolean).map(l=>state.prefix+l+state.suffix).join(state.joiner);}
+    function makeLink(body){return smsHref(state.simNumber,body);}
+    function setLast(label){document.getElementById('lastSent').textContent=label+" • "+now();}
+    function zoneA(m){return wrap([`Ct1#${m}`,`Ct3#${m}`]);}
+    function zoneB(m){return wrap([`Ct1#${m}`,`Ct4#${m}`]);}
+    function zoneC(m){return wrap([`Ct2#${m}`]);}
+    function wireZone(btn,inp,label,fn){const a=document.getElementById(btn);a.onclick=()=>{const m=document.getElementById(inp).value;const body=fn(m);a.href=makeLink(body);setLast(label+" "+m+"min");};}
+    wireZone("zA_start","zA_minutes","Zone A",zoneA);
+    wireZone("zB_start","zB_minutes","Zone B",zoneB);
+    wireZone("zC_start","zC_minutes","Zone C",zoneC);
+    document.getElementById("zA_preview").onclick=()=>alert(zoneA(document.getElementById("zA_minutes").value));
+    document.getElementById("zB_preview").onclick=()=>alert(zoneB(document.getElementById("zB_minutes").value));
+    document.getElementById("zC_preview").onclick=()=>alert(zoneC(document.getElementById("zC_minutes").value));
+    function makeTimeset(){const h=document.getElementById("ts_h").value.padStart(2,"0");const m=document.getElementById("ts_m").value.padStart(2,"0");const d=document.getElementById("ts_d").value;return wrap([`Timeset#${h}-${m}-${d}`]);}
+    document.getElementById("timeset_send").onclick=()=>{const b=makeTimeset();document.getElementById("timeset_send").href=makeLink(b);setLast("Timeset");};
+    document.getElementById("timeset_preview").onclick=()=>alert(makeTimeset());
+    function makeDateset(){const y=document.getElementById("ds_y").value;const m=document.getElementById("ds_m").value.padStart(2,"0");const d=document.getElementById("ds_d").value.padStart(2,"0");return wrap([`Dateset#${y}-${m}-${d}`]);}
+    document.getElementById("dateset_send").onclick=()=>{const b=makeDateset();document.getElementById("dateset_send").href=makeLink(b);setLast("Dateset");};
+    document.getElementById("dateset_preview").onclick=()=>alert(makeDateset());
+    function makeTms(){const s=document.getElementById("wm_slot").value;const t=document.getElementById("wm_time").value;const [hh,mm]=t.split(":");const o=document.getElementById("wm_out").value;const on=document.getElementById("wm_on").value;const mask=document.getElementById("wm_mask").value||"1111111";return wrap([`Tms${s}#${hh}-${mm}-R${o}-${on}-${mask}`]);}
+    document.getElementById("tms_send").onclick=()=>{const b=makeTms();document.getElementById("tms_send").href=makeLink(b);setLast("Weekly Timer");};
+    document.getElementById("tms_preview").onclick=()=>alert(makeTms());
+    document.getElementById("manualSend").onclick=()=>{const v=document.getElementById("manualText").value;const b=wrap([v]);document.getElementById("manualSend").href=makeLink(b);setLast("Manual");};
+    document.getElementById("copy").onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById("manualText").value);alert("Copied");}catch(e){alert("Copy failed");}};
+  </script>
+</body>
+</html>
